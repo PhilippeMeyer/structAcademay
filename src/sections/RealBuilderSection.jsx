@@ -12,8 +12,32 @@ import QuotePanel from "../components/builder/QuotePanel.jsx";
 import TermSheet from "../components/builder/TermSheet.jsx";
 import BasketPanel from "../components/builder/BasketPanel.jsx";
 import ScenarioFanChart from "../components/builder/ScenarioFanChart.jsx";
+import IntentCapture from "../components/builder/IntentCapture.jsx";
 
 export default function RealBuilderSection() {
+  // ── Intent / step state ──────────────────────────────────────────────────
+  const [step, setStep] = useState("intent"); // "intent" | "builder"
+  const [intentSource, setIntentSource] = useState(null);
+
+  const handleIntentComplete = ({ source, params }) => {
+    if (source === "skip") {
+      setStep("builder");
+      return;
+    }
+    if (params) {
+      // Apply derived params before showing builder
+      const u = UNIVERSE.find(x => x.id === params.underlyingId) ?? UNIVERSE.find(x => x.id === "^STOXX50E");
+      setUnderlying(u);
+      setProductType(params.productType ?? "brc");
+      setMaturity(params.maturity ?? 2);
+      if (params.barrier)    setBarrier(params.barrier);
+      if (params.protection) setProtection(params.protection);
+      if (params.couponTarget) setCoupon(params.couponTarget);
+      if (params.basketMode) setMode("basket");
+      setIntentSource(source);
+    }
+    setStep("builder");
+  };
   const [mode, setMode] = useState("single"); // single | basket
   const [productType, setProductType] = useState("brc");
   const [underlying, setUnderlying] = useState(UNIVERSE.find(u => u.id === "^STOXX50E"));
@@ -87,6 +111,12 @@ export default function RealBuilderSection() {
 
   return (
     <>
+      {/* Intent capture step */}
+      {step === "intent" && <IntentCapture onComplete={handleIntentComplete} />}
+
+      {/* Builder step */}
+      {step === "builder" && (
+      <>
       <style>{CSS}</style>
       <div style={{ minHeight: "100vh", background: T.bg }}>
         {/* Header */}
@@ -96,7 +126,10 @@ export default function RealBuilderSection() {
               <div style={{ width: 32, height: 32, borderRadius: 6, background: `${T.gold}15`, border: `1px solid ${T.gold}30`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>🏗️</div>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: T.text, letterSpacing: "-.01em" }}>Real Product Builder</div>
-                <div style={{ fontSize: 9, color: T.textDim, letterSpacing: ".1em", textTransform: "uppercase" }}>Live Underlyings · Indicative Pricing</div>
+                <div style={{ fontSize: 9, color: T.textDim, letterSpacing: ".1em", textTransform: "uppercase" }}>
+                  Live Underlyings · Indicative Pricing
+                  {intentSource && <span style={{ marginLeft: 8, color: T.teal }}>· Built from {intentSource === "questionnaire" ? "questionnaire" : "AI brief"}</span>}
+                </div>
               </div>
             </div>
 
@@ -119,6 +152,11 @@ export default function RealBuilderSection() {
                 </button>
               ))}
             </div>
+
+            <button onClick={() => { setStep("intent"); setIntentSource(null); }}
+              style={{ flexShrink: 0, padding: "6px 12px", borderRadius: 4, fontSize: 11, fontWeight: 600, border: `1px solid ${T.teal}40`, background: `${T.teal}10`, color: T.teal, cursor: "pointer" }}>
+              ← Revise intent
+            </button>
 
             <span className="chip" style={{ background: `${T.gold}15`, color: T.gold, flexShrink: 0 }}>TRAINING</span>
           </div>
@@ -311,6 +349,8 @@ export default function RealBuilderSection() {
           <span className="mono" style={{ fontSize: 10, color: T.textDim }}>v1.0</span>
         </div>
       </div>
+      </>
+      )}
     </>
   );
 }

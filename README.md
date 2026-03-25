@@ -2,15 +2,46 @@
 
 A modular React application for RM enablement on structured products — options primer, product builder, payoff explorer, portfolio context, suitability reflexes, lifecycle, stress tests, credit risk, volatility & pricing intuition, worst-of basket mechanics, knowledge check quiz, glossary, comparison table, and a live Real Product Builder with Yahoo Finance data.
 
-## Quick Start
+## Quick Start (development)
 
 ```bash
 cd sp-trainer
+cp .env.example .env      # add your ANTHROPIC_API_KEY
 npm install
-npm run dev
+npm run dev               # → http://localhost:3000
 ```
 
-The app opens at **http://localhost:3000**.
+## Production build
+
+```bash
+npm run build             # compiles to dist/
+npm install               # make sure express is installed
+npm start                 # → http://localhost:4000
+```
+
+`npm start` runs `server.js` — a small Express server that:
+- Serves the compiled `dist/` as static files
+- Exposes `POST /api/interpret` as a server-side proxy to the Anthropic API (API key never reaches the browser)
+- Handles SPA routing (all paths serve `index.html`)
+
+The `.env` file is **never included in the build**. The server reads it at runtime. You can also set `ANTHROPIC_API_KEY` directly as a shell/environment variable instead of using `.env`.
+
+## AI Interpretation (Real Product Builder)
+
+The natural language intent capture in the Real Product Builder calls Claude via a local proxy — the API key never reaches the browser.
+
+**Setup:**
+```bash
+cp .env.example .env
+# Edit .env and add your key:
+# ANTHROPIC_API_KEY=sk-ant-your-key-here
+```
+
+Get an API key at [console.anthropic.com](https://console.anthropic.com/).
+
+The proxy runs automatically inside the Vite dev server (`npm run dev`) — no separate process needed. If the key is missing, the app shows a clear error message pointing here.
+
+The questionnaire mode works entirely offline with no API key required.
 
 ## Build for Production
 
